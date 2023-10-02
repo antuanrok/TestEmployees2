@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Test Employees</string>
+    <string name="textview_name">Имя:</string>
+    <string name="textview_lastname">Родился:</string>
+</resources>
