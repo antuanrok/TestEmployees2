@@ -12,9 +12,7 @@ import com.example.testemployees2.R;
 import com.example.testemployees2.pojo.BirthPlace;
 import com.example.testemployees2.pojo.Person;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.Inflater;
 
 public class PersonAdapters extends RecyclerView.Adapter<PersonAdapters.PersonViewHolder> {
 
@@ -41,8 +39,8 @@ public class PersonAdapters extends RecyclerView.Adapter<PersonAdapters.PersonVi
     public void onBindViewHolder(@NonNull PersonViewHolder holder, int position) {
 
         Person person = persons.get(position);
-        List<BirthPlace> birthPlaces = person.getBirthPlace();
         holder.textViewName.setText(person.getName());
+       List<BirthPlace> birthPlaces = person.getBirthPlace();
         if (birthPlaces!=null&& birthPlaces.size()!=0) {
             StringBuilder stringBuilder = new StringBuilder();
             for (BirthPlace place :

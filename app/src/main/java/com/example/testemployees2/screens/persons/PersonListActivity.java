@@ -1,6 +1,8 @@
 package com.example.testemployees2.screens.persons;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -9,47 +11,46 @@ import android.widget.Toast;
 
 import com.example.testemployees2.R;
 import com.example.testemployees2.adapters.PersonAdapters;
-import com.example.testemployees2.api.ApiFactory;
-import com.example.testemployees2.api.ApiService;
 import com.example.testemployees2.pojo.Person;
-import com.example.testemployees2.pojo.PersonDoc;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
-import io.reactivex.schedulers.Schedulers;
 
-
-public class PersonListActivity extends AppCompatActivity implements PersonListView{
+public class PersonListActivity extends AppCompatActivity {
 
 
     private RecyclerView recyclerView;
     private PersonAdapters adapter;
+    private PersonViewModel personViewModel;
 
-    private PersonListPresenter presenter;
-
-
-    @Override
-    protected void onDestroy() {
-        presenter.disposeDisposable();
-        super.onDestroy();
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        presenter = new PersonListPresenter(this);
+        personViewModel = new ViewModelProvider(this).get(PersonViewModel.class);
         recyclerView = findViewById(R.id.recyclerViewPersons);
         adapter = new PersonAdapters();
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter.setPersons(new ArrayList<>());
         recyclerView.setAdapter(adapter);
-        presenter.loadData();
+        personViewModel.getPersons().observe(this, new Observer<List<Person>>() {
+            @Override
+            public void onChanged(List<Person> personList) {
+                if (personList!=null){adapter.setPersons(personList);}
+            }
+        });
+        personViewModel.getErrors().observe(this, new Observer<Throwable>() {
+            @Override
+            public void onChanged(Throwable throwable) {
+                if (throwable != null) {
+                    Toast.makeText(PersonListActivity.this, "ошибка получения данных: " + throwable.getMessage(), Toast.LENGTH_LONG).show();
+                    personViewModel.clearErrors();
+                }
+            }
+        });
+        personViewModel.loadData();
         /*Person person1 = new Person();
         person1.setName("иван");
         List<BirthPlace> birthPlaces1 = new ArrayList<>();
@@ -101,16 +102,6 @@ public class PersonListActivity extends AppCompatActivity implements PersonListV
 
         adapter.setPersons(persons);*/
 
-    }
-
-    @Override
-    public void showData(List<Person> persons) {
-        adapter.setPersons(persons);
-    }
-
-    @Override
-    public void showError(Throwable throwable) {
-        Toast.makeText(PersonListActivity.this, "ошибка получения данных: " + throwable.getMessage(), Toast.LENGTH_LONG).show();
     }
 
 }

@@ -1,10 +1,20 @@
 package com.example.testemployees2.screens.persons;
 
-import android.widget.Toast;
+import android.app.Application;
+import android.os.AsyncTask;
+
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.example.testemployees2.api.ApiFactory;
 import com.example.testemployees2.api.ApiService;
+import com.example.testemployees2.data.AppDatabase;
+import com.example.testemployees2.pojo.Person;
 import com.example.testemployees2.pojo.PersonDoc;
+
+import java.util.List;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
@@ -12,9 +22,15 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
-public class PersonListPresenter {
+public class PersonViewModel extends AndroidViewModel {
+
+    private static AppDatabase db;
+    private LiveData<List<Person>> persons;
+    private MutableLiveData<Throwable> errors;
+
+
+
     private CompositeDisposable compositeDisposable;
-    private PersonListView view;
 
     private static final String PERSON_URL = "https://api.kinopoisk.dev/v1/person";
 
@@ -44,8 +60,55 @@ public class PersonListPresenter {
     private static final String SELECT_FIELDS4 = "sex";
     private static final String SELECT_FIELDS5 = "countAwards";
 
-    public PersonListPresenter(PersonListView view) {
-        this.view = view;
+    public LiveData<Throwable> getErrors() {
+        return errors;
+    }
+
+    public void clearErrors(){
+      errors.setValue(null);
+    }
+
+    public PersonViewModel(@NonNull Application application) {
+        super(application);
+        db = AppDatabase.getInstance(application);
+        persons = db.personDao().getAllPersons();
+        errors = new MutableLiveData<>();
+    }
+
+    public LiveData<List<Person>> getPersons() {
+        return persons;
+    }
+
+    /**
+     * @noinspection unchecked
+     */
+    private void insertPersons(List<Person> personList) {
+        new InsertPersonTask().execute(personList);
+    }
+
+    private static class InsertPersonTask extends AsyncTask<List<Person>, Void, Void> {
+
+        @SafeVarargs
+        @Override
+        protected final Void doInBackground(List<Person>... lists) {
+            if (lists != null && lists.length > 0) {
+                db.personDao().insertPersons(lists[0]);
+            }
+            return null;
+        }
+    }
+
+    private void deletePersons() {
+        new DeleteAllTask().execute();
+    }
+
+    private static class DeleteAllTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            db.personDao().deleteAllPersons();
+            return null;
+        }
     }
 
     public void loadData() {
@@ -58,13 +121,16 @@ public class PersonListPresenter {
                 .subscribe(new Consumer<PersonDoc>() {
                     @Override
                     public void accept(PersonDoc personDoc) throws Exception {
-                        view.showData(personDoc.getDocs());
+                        //view.showData(personDoc.getDocs());
                         // adapter.setPersons(personDoc.getDocs());
+                        deletePersons();
+                        insertPersons(personDoc.getDocs());
                     }
                 }, new Consumer<Throwable>() {
                     @Override
                     public void accept(Throwable throwable) throws Exception {
-                        view.showError(throwable);
+                        errors.setValue(throwable);
+                      //  view.showError(throwable);
                         //  Toast.makeText(PersonListActivity.this, "ошибка получения данных: " + throwable.getMessage(), Toast.LENGTH_LONG).show();
                     }
                 });
@@ -72,10 +138,12 @@ public class PersonListPresenter {
         compositeDisposable.add(disposable);
     }
 
-    public void disposeDisposable() {
+
+    @Override
+    protected void onCleared() {
         if (compositeDisposable != null) {
             compositeDisposable.dispose();
         }
+        super.onCleared();
     }
-
 }

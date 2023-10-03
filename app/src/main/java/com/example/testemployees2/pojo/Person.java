@@ -1,11 +1,24 @@
 package com.example.testemployees2.pojo;
 
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+import androidx.room.TypeConverters;
+
+import com.example.testemployees2.converters.Converter;
+import com.example.testemployees2.pojo.BirthPlace;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+import java.util.ArrayList;
 import java.util.List;
 
+
+@Entity(tableName = "persons")
+@TypeConverters(value = Converter.class)
 public class Person {
+
+    @PrimaryKey (autoGenerate = true)
+    private  int id ;
     @SerializedName("name")
     @Expose
     private String name;
@@ -14,7 +27,7 @@ public class Person {
     private String enName;
     @SerializedName("birthPlace")
     @Expose
-    private List<BirthPlace> birthPlace;
+    private List<BirthPlace> birthPlace=null;
     @SerializedName("countAwards")
     @Expose
     private int countAwards;
@@ -22,6 +35,14 @@ public class Person {
     @Expose
     private String sex;
 
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public String getName() {
         return name;
@@ -38,6 +59,8 @@ public class Person {
     public void setEnName(String enName) {
         this.enName = enName;
     }
+
+
 
     public List<BirthPlace> getBirthPlace() {
         return birthPlace;
